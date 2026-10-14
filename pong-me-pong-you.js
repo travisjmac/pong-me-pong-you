@@ -52,6 +52,89 @@
     canvas.setAttribute("role", "img");
     canvas.setAttribute("aria-label", "Pong Me, Pong You");
     shell.appendChild(canvas);
+    const creditsStyle = document.createElement("style");
+    creditsStyle.textContent = [
+      ".pmpy-credits-btn{position:absolute;z-index:6;left:12px;bottom:12px;font:700 14px/1 system-ui,Segoe UI,sans-serif;color:#fff6ea;background:rgba(26,16,40,.92);border:2px solid #f2c14e;border-radius:999px;padding:8px 14px;cursor:pointer;touch-action:manipulation;}",
+      ".pmpy-credits-btn:hover{border-color:#ffe7a8;}",
+      ".pmpy-credits-btn:focus-visible,.pmpy-credits-close:focus-visible{outline:2px solid #fff6ea;outline-offset:2px;}",
+      ".pmpy-credits{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,4,16,.78);}",
+      ".pmpy-credits[hidden]{display:none !important;}",
+      ".pmpy-credits-card{width:min(28rem,100%);max-height:min(84vh,560px);overflow:auto;background:#f7f9ff;color:#1c1917;border:4px solid #7ea2e8;border-radius:18px;padding:16px 18px 18px;box-shadow:0 14px 0 rgba(0,0,0,.28);text-align:center;user-select:text;}",
+      ".pmpy-credits-card .pmpy-credits-name{margin:0 0 8px;font:700 1.15rem/1.3 Georgia,'Times New Roman',serif;color:#142033;}",
+      ".pmpy-credits-card p{margin:0 0 8px;font:600 15px/1.45 'Segoe UI',system-ui,sans-serif;color:#1c1917;}",
+      ".pmpy-credits-card a{color:#1d4ed8;}",
+      ".pmpy-credits-close{margin-top:6px;font:700 14px/1 'Segoe UI',system-ui,sans-serif;color:#fff8ea;background:#146b45;border:2px solid #e0b56a;border-radius:999px;padding:7px 14px;cursor:pointer;}"
+    ].join("");
+    const creditsBtn = document.createElement("button");
+    creditsBtn.type = "button";
+    creditsBtn.className = "pmpy-credits-btn";
+    creditsBtn.textContent = "Credits";
+    creditsBtn.setAttribute("data-credits", "");
+    creditsBtn.setAttribute("aria-haspopup", "dialog");
+    creditsBtn.setAttribute("aria-expanded", "false");
+    const creditsLayer = document.createElement("div");
+    creditsLayer.className = "pmpy-credits";
+    creditsLayer.hidden = true;
+    creditsLayer.setAttribute("data-credits", "");
+    const creditsCard = document.createElement("div");
+    creditsCard.className = "pmpy-credits-card";
+    creditsCard.setAttribute("role", "dialog");
+    creditsCard.setAttribute("aria-modal", "true");
+    creditsCard.setAttribute("aria-label", "Credits");
+    const creditsName = document.createElement("p");
+    creditsName.className = "pmpy-credits-name";
+    creditsName.textContent = "Travis MacDonald";
+    const creditsClose = document.createElement("button");
+    creditsClose.type = "button";
+    creditsClose.className = "pmpy-credits-close";
+    creditsClose.textContent = "Close";
+    function creditsLine(href, label) {
+      const p = document.createElement("p");
+      const a = document.createElement("a");
+      a.href = href;
+      a.textContent = label;
+      p.appendChild(a);
+      return p;
+    }
+    const creditsHope = document.createElement("p");
+    creditsHope.textContent = "Hope you like these. They were fun to make.";
+    const creditsUrge = document.createElement("p");
+    creditsUrge.textContent = "Use that urge to create. Building something you care about lasts longer than tearing something down. Enjoy these, then go make your own.";
+    creditsCard.append(
+      creditsName,
+      creditsLine("https://travisjmac.com", "https://travisjmac.com"),
+      creditsLine("mailto:travis@travisjmac.com", "travis@travisjmac.com"),
+      creditsHope,
+      creditsUrge,
+      creditsClose
+    );
+    creditsLayer.appendChild(creditsCard);
+    shell.append(creditsStyle, creditsBtn, creditsLayer);
+    let creditsOpen = false;
+    function openCredits() {
+      creditsOpen = true;
+      creditsLayer.hidden = false;
+      creditsBtn.setAttribute("aria-expanded", "true");
+      creditsClose.focus();
+    }
+    function closeCredits() {
+      if (!creditsOpen) return;
+      creditsOpen = false;
+      creditsLayer.hidden = true;
+      creditsBtn.setAttribute("aria-expanded", "false");
+      creditsBtn.focus({ preventScroll: true });
+    }
+    creditsBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openCredits();
+    });
+    creditsClose.addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeCredits();
+    });
+    creditsLayer.addEventListener("click", function (e) {
+      if (e.target === creditsLayer) closeCredits();
+    });
     el.appendChild(shell);
     shell.tabIndex = 0;
 
@@ -250,6 +333,17 @@
 
     function onDown(e) {
       if (dead) return;
+      const inCreditsUi = !!(e.target && e.target.closest && e.target.closest("[data-credits]"));
+      if (creditsOpen) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeCredits();
+        } else if (!inCreditsUi) {
+          e.preventDefault();
+        }
+        return;
+      }
+      if (inCreditsUi && e.key !== "Escape") return;
       const act = actionOf(e);
       if (!act || typingTarget(e.target)) return;
       e.preventDefault();
